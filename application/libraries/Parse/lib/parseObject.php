@@ -18,7 +18,7 @@ class parseObject extends parseRestClient{
 		parent::__construct();
 	}
 
-	public function pointer($name, $value) {
+	private function pointer($name, $value) {
 		if (is_array($value)) {
 			$relation = new StdClass();
 			$relation->__op = "AddRelation";
@@ -26,17 +26,28 @@ class parseObject extends parseRestClient{
 				if (is_object($v) && is_a($v, 'parseObject') && isset($v->data['objectId']) && isset($v->_className)) {
 					$relation->objects[] = array("__type" => "Pointer", "className" => $v->_className, "objectId" => $v->data['objectId']);
 				}
+				else {
+					$this->data[$name] = $value;
+					return $this;
+				}
 			}
 			$this->data[$name] = $relation;
 		}
-
-		if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className)) {
+		else if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className)) {
 			$this->data[$name] = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
 		}
+		else {
+			$this->data[$name] = $value;
+		}
+
+		return $this;
 	}
 
 	public function __set($name, $value) {
-		if($name != '_className') {
+		if (is_object($value) || is_array($value)) {
+			$this->pointer($name, $value);
+		}
+		else if ($name != '_className') {
 			$this->data[$name] = $value;
 		}
 	}
@@ -133,8 +144,6 @@ class parseObject extends parseRestClient{
 
 			$this->data['objectId'] = $id;
 			return $this->stdToParse($this->_className, $request, $include_relation);
-
-			return $request;
 		}
 	}
 
@@ -152,10 +161,12 @@ class parseObject extends parseRestClient{
 
 	public function increment($field,$amount){
 		$this->data[$field] = $this->dataType('increment', $amount);
+		return $this;
 	}
 
 	public function decrement($id){
 		$this->data[$field] = $this->dataType('decrement', $amount);
+		return $this;
 	}
 
 	public function delete($id){
@@ -166,13 +177,15 @@ class parseObject extends parseRestClient{
 			));
 
 			return $request;
-		}		
+		}
 	}
 
 	public function addIncludes($name){
 		foreach (func_get_args() as $param) {
 	        $this->_includes[] = $param;
 	    }
+
+	    return $this;
 	}
 }
 
