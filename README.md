@@ -28,41 +28,57 @@ EXAMPLES
 ### Using ParseObject ###
 
 ```
-      $this->load->library('parse');
-      $testObj = $this->parse->ParseObject('testObj');
-      $testObj->myObject = "It works !"
-      $testObj->save();
+	$this->load->library('parse');
+	$testObj = $this->parse->ParseObject('testObj');
+	$testObj->myObject = "It works !"
+	$testObj->save();
 ```
 
 ### Using ParseObject Pointer ###
 ```
-      $testObj = $this->parse->ParseObject('testObj');
-  		$testObj->myObject = "It works !";
-  		$testObj->save();
-  
-  		$user = $this->parse->parseObject('testUser');
-  		$user->test = $testObj;
-  		$user->save();
+	$testObj = $this->parse->ParseObject('testObj');
+	$testObj->myObject = "It works !";
+	$testObj->save();
+	
+	$user = $this->parse->parseObject('testUser');
+	$user->test = $testObj;
+	$user->save();
+```
+
+### Retrieving ParseObject pointer ###
+```
+	$testObj = $this->parse->ParseObject('testObj');
+	$testObj->myObject = "It works !";
+	$testObj->save();
+	
+	$user = $this->parse->parseObject('testUser');
+	$user->test = $testObj;
+	$user->test2 = $testObj;
+	$user->save();
+	
+	// Arguments in addIncludes are unlimited
+	$userRet = $this->parse->parseObject('testUser')->addIncludes('test', 'tes2')->get($user->data['objectId']);
+	print_r($userRet);
 ```
 
 ### Using ParseObject Relations ###
 ```
-    $videos = [];
-		$tags = ['tag1', 'tag2', 'tag3', 'tag4'];
-		for ($i = 0; $i < 5; $i++) {
-			$video = $this->parse->parseObject('Videos');
-			$video->title = "My video";
-			$video->url = "http://google.com";
-			$video->tags = $tags;
-			$video->save();
-			$videos[] = $video;
-		}
-
-		$user = $this->parse->parseObject('User');
-		$user->video = $video;
-		$user->videos = $videos;
-		$user->save();
-
-		$userRet = $this->parse->parseObject('User')->addIncludes('video')->get($user->data['objectId'])->linkRelation('videos');
-		print_r($userRet);
+	$videos = [];
+	$tags = ['tag1', 'tag2', 'tag3', 'tag4'];
+	for ($i = 0; $i < 5; $i++) {
+		$video = $this->parse->parseObject('Videos');
+		$video->title = "My video";
+		$video->url = "http://google.com";
+		$video->tags = $tags;
+		$video->save();
+		$videos[] = $video;
+	}
+	
+	$user = $this->parse->parseObject('User');
+	$user->video = $video;
+	$user->videos = $videos;
+	$user->save();
+	
+	$userRet = $this->parse->parseObject('User')->addIncludes('video')->get($user->data['objectId'])->linkRelation('videos');
+	print_r($userRet);
 ```
