@@ -1,15 +1,6 @@
 <?php
-include 'parseConfig.php';
-include 'parseObject.php';
-include 'parseQuery.php';
-include 'parseUser.php';
-include 'parseFile.php';
-include 'parsePush.php';
-include 'parseGeoPoint.php';
-include 'parseACL.php';
-include 'parseCloud.php';
 
-class parseRestClient{
+class parseRestClient {
 
 	private $_appid = '';
 	private $_masterkey = '';
@@ -21,11 +12,12 @@ class parseRestClient{
 	public $returnData = '';
 
 	public function __construct(){
-		$parseConfig = new parseConfig;
-		$this->_appid = $parseConfig::APPID;
-    	$this->_masterkey = $parseConfig::MASTERKEY;
-    	$this->_restkey = $parseConfig::RESTKEY;
-    	$this->_parseurl = $parseConfig::PARSEURL;
+        $ci =& get_instance();
+        $ci->config->load('parse');
+		$this->_appid = $ci->config->item('app_id');
+    	$this->_masterkey = $ci->config->item('master_key');
+    	$this->_restkey = $ci->config->item('rest_key');
+    	$this->_parseurl = $ci->config->item('parse_url');
 
 		if(empty($this->_appid) || empty($this->_restkey) || empty($this->_masterkey)){
 			$this->throwError('You must set your Application ID, Master Key and REST API Key');
@@ -77,6 +69,7 @@ class parseRestClient{
 			));	
 		}
 		curl_setopt($c, CURLOPT_CUSTOMREQUEST, $args['method']);
+		curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
 		$url = $this->_parseurl . $args['requestUrl'];
 
 		if($args['method'] == 'PUT' || $args['method'] == 'POST'){

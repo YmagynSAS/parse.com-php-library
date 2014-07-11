@@ -1,5 +1,7 @@
 <?php
 
+include_once('parse.php');
+
 class parseFile extends parseRestClient{
 
 	private $_fileName;

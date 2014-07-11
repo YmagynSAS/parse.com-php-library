@@ -13,6 +13,9 @@ $acl->setWriteAccessForRole('role_name',true);
 $object->ACL($acl);
 $object->save();
 */
+
+include_once('parse.php');
+
 class parseACL{
 	public $acl;
 	public function __construct(){

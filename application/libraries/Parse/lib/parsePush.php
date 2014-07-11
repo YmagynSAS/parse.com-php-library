@@ -1,5 +1,7 @@
 <?php
 
+include_once('parse.php');
+
 class parsePush extends parseRestClient{
 
 	public $channels;

@@ -1,5 +1,7 @@
 <?php
 
+include_once('parse.php');
+
 class parseGeoPoint extends parseRestClient{
 
 	public $lat;

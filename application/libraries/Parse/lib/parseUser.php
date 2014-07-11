@@ -1,5 +1,7 @@
 <?php
 
+include_once('parse.php');
+
 class parseUser extends parseRestClient{
 
 	public $authData;

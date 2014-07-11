@@ -9,6 +9,9 @@
 	$result = $cloud->run();
 	print_r($result);
 */
+
+include_once('parse.php');
+
 class parseCloud extends parseRestClient{
 	public $_options;
 	private $_functionName = '';
