@@ -2,7 +2,7 @@
 
 include_once('parse.php');
 
-class parseQuery extends parseRestClient{
+class parseQuery extends parseRestClient {
 	private $_limit = 100;
 	private $_skip = 0;
 	private $_count = 0;
@@ -11,18 +11,16 @@ class parseQuery extends parseRestClient{
 	private $_include = array();
 
 	public function __construct($class=''){
-		if($class == 'users' || $class == 'installation'){
+		if ($class == "users" || $class == "User" || is_a($class, 'parseUser'))
+			$this->_requestUrl = "users";
+		else if ($class == 'installation')
 			$this->_requestUrl = $class;
-		}
-		elseif($class != ''){
+		elseif ($class != '')
 			$this->_requestUrl = 'classes/'.$class;
-		}
-		else{
+		else
 			$this->throwError('include the className when creating a parseQuery');
-		}
-		
-		parent::__construct();
 
+		parent::__construct();
 	}
 
 	public function find(){
@@ -33,7 +31,6 @@ class parseQuery extends parseRestClient{
 			));
 
 			return $request;
-
 		}
 		else{
 			$urlParams = array(
@@ -64,15 +61,16 @@ class parseQuery extends parseRestClient{
 			return $request;
 		}
 	}
+
 	//setting this to 1 by default since you'd typically only call this function if you were wanting to turn it on
-  public function setCount($bool=1){
-  	if(is_bool($bool)){
-  		$this->_count = $bool;
-  	}
+	public function setCount($bool=1) {
+		if(is_bool($bool)){
+			$this->_count = $bool;
+		}
 		else{
 			$this->throwError('setCount requires a boolean paremeter');
 		}		
-  }
+	}
 
 	public function getCount(){
 		$this->_count = 1;
