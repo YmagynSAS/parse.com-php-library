@@ -130,6 +130,9 @@ class parseQuery extends parseRestClient {
 
 	public function whereEqualTo($key,$value){
 		if(isset($key) && isset($value)){
+			if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className)) {
+				$value = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
+
 			$this->_query[$key] = $value;
 		}
 		else{
@@ -139,6 +142,9 @@ class parseQuery extends parseRestClient {
 
 	public function whereNotEqualTo($key,$value){
 		if(isset($key) && isset($value)){
+			if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className)) {
+				$value = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
+
 			$this->_query[$key] = array(
 				'$ne' => $value
 			);
@@ -281,9 +287,9 @@ class parseQuery extends parseRestClient {
 		
 	}
 
-	public function wherePointer($key,$className,$objectId){
+	public function wherePointer($key, $className, $objectId){
 		if(isset($key) && isset($className)){
-			$this->_query[$key] = $this->dataType('pointer', array($className,$objectId));
+			$this->_query[$key] = $this->dataType('pointer', array($className, $objectId));
 		}	
 		else{
 			$this->throwError('the $key and $className parameters must be set when setting a "where" pointer query method');		
