@@ -2,7 +2,7 @@
 
 include_once('parse.php');
 
-class parseUser extends parseRestClient{
+class parseUser extends parseRestClient {
 
 	public $authData;
 
@@ -10,7 +10,7 @@ class parseUser extends parseRestClient{
 		$this->data[$name] = $value;
 	}
 
-	public function signup($username='',$password=''){
+	public function signup($username='', $password=''){
 		if($username != '' && $password != ''){
 			$this->username = $username;
 			$this->password = $password;
@@ -32,7 +32,12 @@ class parseUser extends parseRestClient{
 		
 	}
 
-	public function login(){
+	public function login($username='', $password='') {
+		if($username != '' && $password != ''){
+			$this->data['username'] = $username;
+			$this->data['password'] = $password;
+		}
+
 		if(!empty($this->data['username']) || !empty($this->data['password'])	){
 			$request = $this->request(array(
 				'method' => 'GET',
@@ -42,9 +47,12 @@ class parseUser extends parseRestClient{
 		    		'username' => $this->data['username']
 		    	)
 			));
-			
-	    	return $request;			
-	
+
+			foreach ($request as $key => $value) {
+				$this->data[$key] = $value;
+			}
+
+	    	return $this;
 		}
 		else{
 			$this->throwError('username and password field are required for the login method');
@@ -52,21 +60,21 @@ class parseUser extends parseRestClient{
 	
 	}
 
-public function socialLogin(){
-	if(!empty($this->authData)){
-		$request = $this->request( array(
-			'method' => 'POST',
-			'requestUrl' => 'users',
-			'data' => array(
-				'authData' => $this->authData
-			)
-		));
-		return $request;
+	public function socialLogin(){
+		if(!empty($this->authData)){
+			$request = $this->request( array(
+				'method' => 'POST',
+				'requestUrl' => 'users',
+				'data' => array(
+					'authData' => $this->authData
+				)
+			));
+			return $request;
+		}
+		else{
+			$this->throwError('authArray must be set use addAuthData method');
+		}
 	}
-	else{
-		$this->throwError('authArray must be set use addAuthData method');
-	}
-}
 
 	public function get($objectId){
 		if($objectId != ''){
@@ -180,8 +188,7 @@ public function socialLogin(){
 		else{
 			$this->throwError('email is required for the requestPasswordReset method');
 		}
-
-}
+	}
 
 	
 }

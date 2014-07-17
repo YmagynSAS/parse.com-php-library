@@ -36,6 +36,9 @@ class parseObject extends parseRestClient{
 		else if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className)) {
 			$this->data[$name] = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
 		}
+		else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data['objectId'])) {
+			$this->data[$name] = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data['objectId']);
+		}
 		else {
 			$this->data[$name] = $value;
 		}
