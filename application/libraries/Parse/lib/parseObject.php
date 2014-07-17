@@ -108,7 +108,7 @@ class parseObject extends parseRestClient{
 			if (is_object($value) && isset($value->__type) && $value->__type == "Object") {
 				$className = $value->className;
 				unset($value->className);
-				$objRet->{$key} = $this->stdToParse($className, $value, $include_relation);
+				$objRet->data[$key] = $this->stdToParse($className, $value, $include_relation);
 			}
 			else if (is_object($value) && isset($value->__type) && $value->__type == "Relation" && $include_relation) {
 				$resp = $this->getRelation($key, $value);
