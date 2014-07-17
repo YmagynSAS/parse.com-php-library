@@ -130,7 +130,7 @@ class parseQuery extends parseRestClient {
 
 	public function whereEqualTo($key,$value){
 		if(isset($key) && isset($value)){
-			if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className)) {
+			if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className))
 				$value = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
 
 			$this->_query[$key] = $value;
@@ -142,7 +142,7 @@ class parseQuery extends parseRestClient {
 
 	public function whereNotEqualTo($key,$value){
 		if(isset($key) && isset($value)){
-			if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className)) {
+			if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className))
 				$value = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
 
 			$this->_query[$key] = array(
