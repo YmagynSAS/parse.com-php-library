@@ -6,8 +6,41 @@ class parseUser extends parseRestClient {
 
 	public $authData;
 
-	public function __set($name,$value){
-		$this->data[$name] = $value;
+	private function pointer($name, $value) {
+		if (is_array($value)) {
+			$relation = new StdClass();
+			$relation->__op = "AddRelation";
+			foreach ($value as $k => $v) {
+				if (is_object($v) && is_a($v, 'parseObject') && isset($v->data['objectId']) && isset($v->_className)) {
+					$relation->objects[] = array("__type" => "Pointer", "className" => $v->_className, "objectId" => $v->data['objectId']);
+				}
+				else {
+					$this->data[$name] = $value;
+					return $this;
+				}
+			}
+			$this->data[$name] = $relation;
+		}
+		else if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className)) {
+			$this->data[$name] = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
+		}
+		else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data['objectId'])) {
+			$this->data[$name] = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data['objectId']);
+		}
+		else {
+			$this->data[$name] = $value;
+		}
+
+		return $this;
+	}
+
+	public function __set($name, $value) {
+		if (is_object($value) || is_array($value)) {
+			$this->pointer($name, $value);
+		}
+		else if ($name != '_className') {
+			$this->data[$name] = $value;
+		}
 	}
 
 	public function signup($username='', $password=''){
@@ -92,8 +125,15 @@ class parseUser extends parseRestClient {
 		
 	}
 	//TODO: should make the parseUser contruct accept the objectId and update and delete would only require the sessionToken
-	public function update($objectId,$sessionToken){
+	public function update($objectId, $sessionToken){
 		if(!empty($objectId) || !empty($sessionToken)){
+
+			$clean = ['sessionToken', 'createdAt', 'objectId', 'updatedAt'];
+			foreach ($clean as $value) {
+				if (isset($this->data[$value]))
+					unset($this->data[$value]);
+			}
+
 			$request = $this->request(array(
 				'method' => 'PUT',
 				'requestUrl' => 'users/'.$objectId,
