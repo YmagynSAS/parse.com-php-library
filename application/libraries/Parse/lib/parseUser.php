@@ -210,6 +210,34 @@ class parseUser extends parseRestClient {
 		}
 	}
 
+	public function become($token) {
+		$urlParams = [];
+		if(!empty($this->_includes)){
+			$urlParams['include'] = implode(',', $this->_includes);
+		}
+
+		$request = $this->request(array(
+			'method' => 'GET',
+    		'requestUrl' => 'users/me',
+    		'urlParams' => $urlParams,
+    		'sessionToken' => $token
+		));
+
+		_p($request);
+		
+		if ($this->data == null)
+			$this->data = new StdClass();
+
+    	foreach ($request as $key => $value) {
+			if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
+				$this->data->{$key} = $this->stdToParse($value->className, $value);
+			else
+				$this->data->{$key} = $value;
+		}
+
+    	return $this;
+	}
+
 	public function get($objectId){
 		if($objectId != ''){
 			$urlParams = [];
@@ -233,7 +261,7 @@ class parseUser extends parseRestClient {
 					$this->data->{$key} = $value;
 			}
 
-	    	return $this;			
+	    	return $this;
 		}
 		else{
 			$this->throwError('objectId is required for the get method');
