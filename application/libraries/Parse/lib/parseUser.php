@@ -149,6 +149,23 @@ class parseUser extends parseRestClient {
 		return $this;
 	}
 
+	public function addToRelation($name, parseObject $value) {
+		if (!isset($this->data->{$name})) {
+			$this->pointer($name, [$value]);
+		}
+		else {
+			if (is_object($this->data->{$name}) && isset($this->data->{$name}->__type) && $this->data->{$name}->__type == "Relation") {
+				$this->linkRelation($name);
+				$this->addToRelation($name, $value);
+			}
+			else {
+				$relation = $this->data->{$name};
+				$relation[] = $value;
+				$this->pointer($name, $relation);
+			}
+		}
+	}
+
 	private function stdToParse($class, $obj, $include_relation = FALSE) {
 		$objRet = new parseObject($class);
 

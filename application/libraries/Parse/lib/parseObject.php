@@ -60,20 +60,25 @@ class parseObject extends parseRestClient {
 	}
 
 	public function save() {
-		if(count($this->data) > 0 && $this->_className != ''){
-			try {
-				$request = $this->request(array(
-					'method' => 'POST',
-					'requestUrl' => 'classes/'.$this->_className,
-					'data' => $this->data,
-				));
-			} catch (Exception $e) {
-				die("An error occured while you trying to save your object:" . $e->getMessage());
-			}
+		if (isset($this->data->objectId)) {
+			return $this->update($this->data->objectId);
+		}
+		else {
+			if(count($this->data) > 0 && $this->_className != ''){
+				try {
+					$request = $this->request(array(
+						'method' => 'POST',
+						'requestUrl' => 'classes/'.$this->_className,
+						'data' => $this->data,
+					));
+				} catch (Exception $e) {
+					die("An error occured while you trying to save your object:" . $e->getMessage());
+				}
 
-			$this->data->objectId = $request->objectId;
-			$this->data->createdAt = $request->createdAt;
-			return $request;
+				$this->data->objectId = $request->objectId;
+				$this->data->createdAt = $request->createdAt;
+				return $request;
+			}
 		}
 	}
 
@@ -90,6 +95,23 @@ class parseObject extends parseRestClient {
 		$query->where('$relatedTo', $relatedTo);
 		$resp = $query->find();
 		return $resp;
+	}
+
+	public function addToRelation($name, parseObject $value) {
+		if (!isset($this->data->{$name})) {
+			$this->pointer($name, [$value]);
+		}
+		else {
+			if (is_object($this->data->{$name}) && isset($this->data->{$name}->__type) && $this->data->{$name}->__type == "Relation") {
+				$this->linkRelation($name);
+				$this->addToRelation($name, $value);
+			}
+			else {
+				$relation = $this->data->{$name};
+				$relation[] = $value;
+				$this->pointer($name, $relation);
+			}
+		}
 	}
 
 	public function linkRelation($key, $include_relation = FALSE) {
@@ -158,6 +180,9 @@ class parseObject extends parseRestClient {
 
 	public function update($id){
 		if($this->_className != '' || !empty($id)){
+
+			unset($this->data->objectId);
+			unset($this->data->createdAt);
 			$request = $this->request(array(
 				'method' => 'PUT',
 				'requestUrl' => 'classes/'.$this->_className.'/'.$id,
