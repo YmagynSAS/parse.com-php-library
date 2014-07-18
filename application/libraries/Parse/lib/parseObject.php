@@ -123,14 +123,18 @@ class parseObject extends parseRestClient {
 			
 		$resp = $this->getRelation($key, $value);
 		$arr = [];
-		foreach ($resp->results as $res) {
+		if (isset($resp->results))
+			$result = $resp->results;
+		else
+			$result = $resp;
+		foreach ($result as $res) {
 			$arr[] = $this->stdToParse($value->className, $res, $include_relation);
 		}
 		$this->data->{$key} = $arr;
 		return $this;
 	}
 
-	private function stdToParse($class, $obj, $include_relation = FALSE) {
+	public function stdToParse($class, $obj, $include_relation = FALSE) {
 		$objRet = new parseObject($class);
 
 		foreach ($obj as $key => $value) {
