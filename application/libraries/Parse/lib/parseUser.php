@@ -2,19 +2,27 @@
 
 include_once('parse.php');
 include_once('parseQuery.php');
-include_once('parseObject.php');
+
+if (!class_exists('parseObject')) {
+	include_once('parseObject.php');
+}
 
 class parseUser extends parseRestClient {
 	public $_includes = array();
 	public $authData;
+
+	function __construct() {
+		$this->data = new StdClass();
+		parent::__construct();
+	}
 
 	private function pointer($name, $value) {
 		if (is_array($value)) {
 			$relation = new StdClass();
 			$relation->__op = "AddRelation";
 			foreach ($value as $k => $v) {
-				if (is_object($v) && is_a($v, 'parseObject') && isset($v->data['objectId']) && isset($v->_className)) {
-					$relation->objects[] = array("__type" => "Pointer", "className" => $v->_className, "objectId" => $v->data['objectId']);
+				if (is_object($v) && is_a($v, 'parseObject') && isset($v->data->objectId) && isset($v->_className)) {
+					$relation->objects[] = array("__type" => "Pointer", "className" => $v->_className, "objectId" => $v->data->objectId);
 				}
 				else {
 					$this->data->{$name} = $value;
@@ -23,11 +31,11 @@ class parseUser extends parseRestClient {
 			}
 			$this->data->{$name} = $relation;
 		}
-		else if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className)) {
-			$this->data->{$name} = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
+		else if (is_object($value) && is_a($value, 'parseObject') && isset($value->data->objectId) && isset($value->_className)) {
+			$this->data->{$name} = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data->objectId);
 		}
-		else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data['objectId'])) {
-			$this->data->{$name} = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data['objectId']);
+		else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data->objectId)) {
+			$this->data->{$name} = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data->objectId);
 		}
 		else {
 			$this->data->{$name} = $value;
@@ -50,6 +58,9 @@ class parseUser extends parseRestClient {
 
 	public function signup($username='', $password=''){
 		if($username != '' && $password != ''){
+			if (is_null($this->data))
+				$this->data = new StdClass();
+
 			$this->data->username = $username;
 			$this->data->password = $password;
 		}
@@ -67,27 +78,36 @@ class parseUser extends parseRestClient {
 		else{
 			$this->throwError('username and password fields are required for the signup method');
 		}
-		
 	}
 
 	public function login($username='', $password='') {
 		if($username != '' && $password != ''){
+			if (is_null($this->data))
+				$this->data = new StdClass();
 			$this->data->username = $username;
 			$this->data->password = $password;
 		}
 
 		if(!empty($this->data->username) || !empty($this->data->password)	){
+			$urlParams = [];
+			if(!empty($this->_includes)){
+				$urlParams['include'] = implode(',', $this->_includes);
+			}
+
 			$request = $this->request(array(
 				'method' => 'GET',
 	    		'requestUrl' => 'login',
 		    	'data' => array(
 		    		'password' => $this->data->password,
-		    		'username' => $this->data->username
+		    		'username' => $this->data->username,
 		    	)
 			));
 
 			foreach ($request as $key => $value) {
-				$this->data->{$key} = $value;
+				if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
+					$this->data->{$key} = $this->stdToParse($value->className, $value);
+				else
+					$this->data->{$key} = $value;
 			}
 
 	    	return $this;
@@ -136,7 +156,7 @@ class parseUser extends parseRestClient {
 			if (is_object($value) && isset($value->__type) && $value->__type == "Object") {
 				$className = $value->className;
 				unset($value->className);
-				$objRet->data[$key] = $this->stdToParse($className, $value, $include_relation);
+				$objRet->data->{$key} = $this->stdToParse($className, $value, $include_relation);
 			}
 			else if (is_object($value) && isset($value->__type) && $value->__type == "Relation" && $include_relation) {
 				$resp = $this->getRelation($key, $value);
@@ -189,8 +209,6 @@ class parseUser extends parseRestClient {
 				$this->data->{$key} = $value;
 			}
 
-			_p($this);
-			//_p($this->stdToParse($this->_className, $request, false));
 	    	return $this;			
 		}
 		else{
@@ -198,6 +216,7 @@ class parseUser extends parseRestClient {
 		}
 		
 	}
+
 	//TODO: should make the parseUser contruct accept the objectId and update and delete would only require the sessionToken
 	public function update($objectId, $sessionToken){
 		if(!empty($objectId) || !empty($sessionToken)){

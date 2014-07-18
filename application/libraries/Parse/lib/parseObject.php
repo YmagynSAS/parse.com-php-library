@@ -3,11 +3,12 @@
 include_once('parse.php');
 include_once('parseQuery.php');
 
-class parseObject extends parseRestClient{
+class parseObject extends parseRestClient {
 	public $_includes = array();
 	public $_className = '';
 
 	public function __construct($class=''){
+		$this->data = new StdClass();
 		if($class != ''){
 			$this->_className = $class;
 		}
@@ -23,8 +24,8 @@ class parseObject extends parseRestClient{
 			$relation = new StdClass();
 			$relation->__op = "AddRelation";
 			foreach ($value as $k => $v) {
-				if (is_object($v) && is_a($v, 'parseObject') && isset($v->data['objectId']) && isset($v->_className)) {
-					$relation->objects[] = array("__type" => "Pointer", "className" => $v->_className, "objectId" => $v->data['objectId']);
+				if (is_object($v) && is_a($v, 'parseObject') && isset($v->data->objectId) && isset($v->_className)) {
+					$relation->objects[] = array("__type" => "Pointer", "className" => $v->_className, "objectId" => $v->data->objectId);
 				}
 				else {
 					$this->data->{$name} = $value;
@@ -33,11 +34,11 @@ class parseObject extends parseRestClient{
 			}
 			$this->data->{$name} = $relation;
 		}
-		else if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className)) {
-			$this->data->{$name} = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
+		else if (is_object($value) && is_a($value, 'parseObject') && isset($value->data->objectId) && isset($value->_className)) {
+			$this->data->{$name} = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data->objectId);
 		}
-		else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data['objectId'])) {
-			$this->data->{$name} = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data['objectId']);
+		else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data->objectId)) {
+			$this->data->{$name} = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data->objectId);
 		}
 		else {
 			$this->data->{$name} = $value;
@@ -114,7 +115,7 @@ class parseObject extends parseRestClient{
 			if (is_object($value) && isset($value->__type) && $value->__type == "Object") {
 				$className = $value->className;
 				unset($value->className);
-				$objRet->data[$key] = $this->stdToParse($className, $value, $include_relation);
+				$objRet->data->{$key} = $this->stdToParse($className, $value, $include_relation);
 			}
 			else if (is_object($value) && isset($value->__type) && $value->__type == "Relation" && $include_relation) {
 				$resp = $this->getRelation($key, $value);
@@ -148,6 +149,8 @@ class parseObject extends parseRestClient{
 				die("An error occured while you trying to get an object:" . $e->getMessage());
 			}
 
+			if ($this->data == null)
+				$this->data = new StdClass();
 			$this->data->objectId = $id;
 			return $this->stdToParse($this->_className, $request, $include_relation);
 		}
