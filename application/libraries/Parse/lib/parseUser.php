@@ -142,7 +142,11 @@ class parseUser extends parseRestClient {
 			
 		$resp = $this->getRelation($key, $value);
 		$arr = [];
-		foreach ($resp->results as $res) {
+		if (isset($resp->results))
+			$result = $resp->results;
+		else
+			$result = $resp;
+		foreach ($result as $res) {
 			$arr[] = $this->stdToParse($value->className, $res, $include_relation);
 		}
 		$this->data->{$key} = $arr;
@@ -166,7 +170,7 @@ class parseUser extends parseRestClient {
 		}
 	}
 
-	private function stdToParse($class, $obj, $include_relation = FALSE) {
+	public function stdToParse($class, $obj, $include_relation = FALSE) {
 		$objRet = new parseObject($class);
 
 		foreach ($obj as $key => $value) {
@@ -223,7 +227,10 @@ class parseUser extends parseRestClient {
 				$this->data = new StdClass();
 
 	    	foreach ($request as $key => $value) {
-				$this->data->{$key} = $value;
+				if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
+					$this->data->{$key} = $this->stdToParse($value->className, $value);
+				else
+					$this->data->{$key} = $value;
 			}
 
 	    	return $this;			

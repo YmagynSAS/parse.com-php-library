@@ -6,6 +6,10 @@ if (!class_exists('parseObject')) {
 	include_once('parseObject.php');
 }
 
+if (!class_exists('parseUser')) {
+	include_once('parseUser.php');
+}
+
 class parseQuery extends parseRestClient {
 	private $_limit = 100;
 	private $_skip = 0;
@@ -21,8 +25,10 @@ class parseQuery extends parseRestClient {
 			$this->_requestUrl = "users";
 			$this->_className = "_User";
 		}
-		else if ($class == 'installation')
+		else if ($class == 'installation') {
 			$this->_requestUrl = $class;
+			$this->_className = "_Installation";
+		}
 		elseif ($class != '') {
 			$this->_requestUrl = 'classes/'.$class;
 			$this->_className = $class;
@@ -50,6 +56,7 @@ class parseQuery extends parseRestClient {
 	}
 
 	public function find(){
+		$urlParams = array();
 		if(empty($this->_query)){
 			if(!empty($this->_include)){
 				$urlParams['include'] = implode(',',$this->_include);
@@ -87,7 +94,7 @@ class parseQuery extends parseRestClient {
 			));
 		}
 
-		if ($this->_requestUrl != "users" && $this->_requestUrl != "installation") {
+		if ($this->_className != "_User" && $this->_requestUrl != "_Installation") {
 			$arr = [];
 			$object = new parseObject($this->_requestUrl);
 			foreach ($request->results as $obj) {
@@ -98,6 +105,25 @@ class parseQuery extends parseRestClient {
 					}
 				}
 				$arr[] = $objParsed;
+			}
+		}
+		else if ($this->_className == "_User") {
+			$arr = [];
+			foreach ($request->results as $obj) {
+				$user = new parseUser();
+
+				foreach ($obj as $key => $value) {
+					if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
+						$user->{$key} = $user->stdToParse($value->className, $value);
+					else
+						$user->{$key} = $value;
+				}
+				if (!empty($this->_relations)) {
+					foreach ($this->_relations as $relation) {
+						$user->linkRelation($relation);
+					}
+				}
+				$arr[] = $user;
 			}
 		}
 
