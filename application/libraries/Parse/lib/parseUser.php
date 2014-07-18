@@ -222,8 +222,6 @@ class parseUser extends parseRestClient {
     		'urlParams' => $urlParams,
     		'sessionToken' => $token
 		));
-
-		_p($request);
 		
 		if ($this->data == null)
 			$this->data = new StdClass();
