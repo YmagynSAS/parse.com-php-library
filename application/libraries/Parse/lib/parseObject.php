@@ -27,31 +27,34 @@ class parseObject extends parseRestClient{
 					$relation->objects[] = array("__type" => "Pointer", "className" => $v->_className, "objectId" => $v->data['objectId']);
 				}
 				else {
-					$this->data[$name] = $value;
+					$this->data->{$name} = $value;
 					return $this;
 				}
 			}
-			$this->data[$name] = $relation;
+			$this->data->{$name} = $relation;
 		}
 		else if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className)) {
-			$this->data[$name] = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
+			$this->data->{$name} = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
 		}
 		else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data['objectId'])) {
-			$this->data[$name] = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data['objectId']);
+			$this->data->{$name} = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data['objectId']);
 		}
 		else {
-			$this->data[$name] = $value;
+			$this->data->{$name} = $value;
 		}
 
 		return $this;
 	}
 
 	public function __set($name, $value) {
+		if ($this->data == null)
+			$this->data = new StdClass();
+
 		if (is_object($value) || is_array($value)) {
 			$this->pointer($name, $value);
 		}
 		else if ($name != '_className') {
-			$this->data[$name] = $value;
+			$this->data->{$name} = $value;
 		}
 	}
 
@@ -67,8 +70,8 @@ class parseObject extends parseRestClient{
 				die("An error occured while you trying to save your object:" . $e->getMessage());
 			}
 
-			$this->data['objectId'] = $request->objectId;
-			$this->data['createdAt'] = $request->createdAt;
+			$this->data->objectId = $request->objectId;
+			$this->data->createdAt = $request->createdAt;
 			return $request;
 		}
 	}
@@ -78,7 +81,7 @@ class parseObject extends parseRestClient{
 			'object' => [
 				'__type' => 'Pointer',
 				'className' => $this->_className,
-				'objectId' => $this->data['objectId']
+				'objectId' => $this->data->objectId
 			],
 			'key' => $key
 		];
@@ -89,9 +92,9 @@ class parseObject extends parseRestClient{
 	}
 
 	public function linkRelation($key, $include_relation = FALSE) {
-		if (!isset($this->data[$key]))
+		if (!isset($this->data->{$key}))
 			$this->throwError($key . " don't exist");
-		$value = $this->data[$key];
+		$value = $this->data->{$key};
 		if (!isset($value->__type) || (isset($value->__type) && $value->__type != "Relation"))
 			$this->throwError($key . " is not a relation");
 			
@@ -100,7 +103,7 @@ class parseObject extends parseRestClient{
 		foreach ($resp->results as $res) {
 			$arr[] = $this->stdToParse($value->className, $res, $include_relation);
 		}
-		$this->data[$key] = $arr;
+		$this->data->{$key} = $arr;
 		return $this;
 	}
 
@@ -145,7 +148,7 @@ class parseObject extends parseRestClient{
 				die("An error occured while you trying to get an object:" . $e->getMessage());
 			}
 
-			$this->data['objectId'] = $id;
+			$this->data->objectId = $id;
 			return $this->stdToParse($this->_className, $request, $include_relation);
 		}
 	}
@@ -163,12 +166,12 @@ class parseObject extends parseRestClient{
 	}
 
 	public function increment($field,$amount){
-		$this->data[$field] = $this->dataType('increment', $amount);
+		$this->data->{$field} = $this->dataType('increment', $amount);
 		return $this;
 	}
 
 	public function decrement($id){
-		$this->data[$field] = $this->dataType('decrement', $amount);
+		$this->data->{$field} = $this->dataType('decrement', $amount);
 		return $this;
 	}
 

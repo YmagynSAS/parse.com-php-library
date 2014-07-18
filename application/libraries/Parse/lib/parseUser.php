@@ -1,9 +1,11 @@
 <?php
 
 include_once('parse.php');
+include_once('parseQuery.php');
+include_once('parseObject.php');
 
 class parseUser extends parseRestClient {
-
+	public $_includes = array();
 	public $authData;
 
 	private function pointer($name, $value) {
@@ -15,41 +17,44 @@ class parseUser extends parseRestClient {
 					$relation->objects[] = array("__type" => "Pointer", "className" => $v->_className, "objectId" => $v->data['objectId']);
 				}
 				else {
-					$this->data[$name] = $value;
+					$this->data->{$name} = $value;
 					return $this;
 				}
 			}
-			$this->data[$name] = $relation;
+			$this->data->{$name} = $relation;
 		}
 		else if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className)) {
-			$this->data[$name] = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
+			$this->data->{$name} = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
 		}
 		else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data['objectId'])) {
-			$this->data[$name] = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data['objectId']);
+			$this->data->{$name} = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data['objectId']);
 		}
 		else {
-			$this->data[$name] = $value;
+			$this->data->{$name} = $value;
 		}
 
 		return $this;
 	}
 
 	public function __set($name, $value) {
+		if ($this->data == null)
+			$this->data = new StdClass();
+
 		if (is_object($value) || is_array($value)) {
 			$this->pointer($name, $value);
 		}
 		else if ($name != '_className') {
-			$this->data[$name] = $value;
+			$this->data->{$name} = $value;
 		}
 	}
 
 	public function signup($username='', $password=''){
 		if($username != '' && $password != ''){
-			$this->username = $username;
-			$this->password = $password;
+			$this->data->username = $username;
+			$this->data->password = $password;
 		}
 
-		if($this->data['username'] != '' && $this->data['password'] != ''){
+		if($this->data->username != '' && $this->data->username != ''){
 			$request = $this->request(array(
 				'method' => 'POST',
 	    		'requestUrl' => 'users',
@@ -67,22 +72,22 @@ class parseUser extends parseRestClient {
 
 	public function login($username='', $password='') {
 		if($username != '' && $password != ''){
-			$this->data['username'] = $username;
-			$this->data['password'] = $password;
+			$this->data->username = $username;
+			$this->data->password = $password;
 		}
 
-		if(!empty($this->data['username']) || !empty($this->data['password'])	){
+		if(!empty($this->data->username) || !empty($this->data->password)	){
 			$request = $this->request(array(
 				'method' => 'GET',
 	    		'requestUrl' => 'login',
 		    	'data' => array(
-		    		'password' => $this->data['password'],
-		    		'username' => $this->data['username']
+		    		'password' => $this->data->password,
+		    		'username' => $this->data->username
 		    	)
 			));
 
 			foreach ($request as $key => $value) {
-				$this->data[$key] = $value;
+				$this->data->{$key} = $value;
 			}
 
 	    	return $this;
@@ -91,6 +96,61 @@ class parseUser extends parseRestClient {
 			$this->throwError('username and password field are required for the login method');
 		}
 	
+	}
+
+	private function getRelation($key, $relation) {
+		$relatedTo = [
+			'object' => [
+				'__type' => 'Pointer',
+				'className' => '_User',
+				'objectId' => $this->data->objectId
+			],
+			'key' => $key
+		];
+		$query = new parseQuery($relation->className);
+		$query->where('$relatedTo', $relatedTo);
+		$resp = $query->find();
+		return $resp;
+	}
+
+	public function linkRelation($key, $include_relation = FALSE) {
+		if (!isset($this->data->{$key}))
+			$this->throwError($key . " don't exist");
+		$value = $this->data->{$key};
+		if (!isset($value->__type) || (isset($value->__type) && $value->__type != "Relation"))
+			$this->throwError($key . " is not a relation");
+			
+		$resp = $this->getRelation($key, $value);
+		$arr = [];
+		foreach ($resp->results as $res) {
+			$arr[] = $this->stdToParse($value->className, $res, $include_relation);
+		}
+		$this->data->{$key} = $arr;
+		return $this;
+	}
+
+	private function stdToParse($class, $obj, $include_relation = FALSE) {
+		$objRet = new parseObject($class);
+
+		foreach ($obj as $key => $value) {
+			if (is_object($value) && isset($value->__type) && $value->__type == "Object") {
+				$className = $value->className;
+				unset($value->className);
+				$objRet->data[$key] = $this->stdToParse($className, $value, $include_relation);
+			}
+			else if (is_object($value) && isset($value->__type) && $value->__type == "Relation" && $include_relation) {
+				$resp = $this->getRelation($key, $value);
+				$arr = [];
+				foreach ($resp->results as $res) {
+					$arr[] = $this->stdToParse($value->className, $res, $include_relation);
+				}
+				$objRet->{$key} = $arr;
+			}
+			else {
+				$objRet->{$key} = $value;
+			}
+		}
+		return $objRet;
 	}
 
 	public function socialLogin(){
@@ -111,13 +171,27 @@ class parseUser extends parseRestClient {
 
 	public function get($objectId){
 		if($objectId != ''){
+			$urlParams = [];
+			if(!empty($this->_includes)){
+				$urlParams['include'] = implode(',', $this->_includes);
+			}
+
 			$request = $this->request(array(
 				'method' => 'GET',
 	    		'requestUrl' => 'users/'.$objectId,
+	    		'urlParams' => $urlParams
 			));
 			
-	    	return $request;			
-			
+			if ($this->data == null)
+				$this->data = new StdClass();
+
+	    	foreach ($request as $key => $value) {
+				$this->data->{$key} = $value;
+			}
+
+			_p($this);
+			//_p($this->stdToParse($this->_className, $request, false));
+	    	return $this;			
 		}
 		else{
 			$this->throwError('objectId is required for the get method');
@@ -130,8 +204,8 @@ class parseUser extends parseRestClient {
 
 			$clean = ['sessionToken', 'createdAt', 'objectId', 'updatedAt'];
 			foreach ($clean as $value) {
-				if (isset($this->data[$value]))
-					unset($this->data[$value]);
+				if (isset($this->data->{$value}))
+					unset($this->data->{$value});
 			}
 
 			$request = $this->request(array(
@@ -230,6 +304,13 @@ class parseUser extends parseRestClient {
 		}
 	}
 
+	public function addIncludes($name){
+		foreach (func_get_args() as $param) {
+	        $this->_includes[] = $param;
+	    }
+
+	    return $this;
+	}
 	
 }
 

@@ -11,7 +11,7 @@ class parseQuery extends parseRestClient {
 	private $_include = array();
 
 	public function __construct($class=''){
-		if ($class == "users" || $class == "User" || is_a($class, 'parseUser'))
+		if ($class == "users" || $class == "User" || is_a($class, 'parseUser'))
 			$this->_requestUrl = "users";
 		else if ($class == 'installation')
 			$this->_requestUrl = $class;
