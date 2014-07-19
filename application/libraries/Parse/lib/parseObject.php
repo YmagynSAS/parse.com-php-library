@@ -3,6 +3,10 @@
 include_once('parse.php');
 include_once('parseQuery.php');
 
+if (!class_exists('parseUser')) {
+	include_once('parseUser.php');
+}
+
 class parseObject extends parseRestClient {
 	public $_includes = array();
 	public $_className = '';

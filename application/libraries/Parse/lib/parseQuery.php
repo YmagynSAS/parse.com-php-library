@@ -2,12 +2,12 @@
 
 include_once('parse.php');
 
-if (!class_exists('parseObject')) {
-	include_once('parseObject.php');
-}
-
 if (!class_exists('parseUser')) {
 	include_once('parseUser.php');
+}
+
+if (!class_exists('parseObject')) {
+	include_once('parseObject.php');
 }
 
 class parseQuery extends parseRestClient {
@@ -127,7 +127,12 @@ class parseQuery extends parseRestClient {
 			}
 		}
 
-		return $arr;
+		$res = new StdClass();
+		if (isset($request->count))
+			$res->count = $request->count;
+
+		$res->results = $arr;
+		return $res;
 	}
 
 	//setting this to 1 by default since you'd typically only call this function if you were wanting to turn it on
