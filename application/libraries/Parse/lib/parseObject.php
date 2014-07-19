@@ -65,7 +65,7 @@ class parseObject extends parseRestClient {
 		}
 	}
 
-	public function setData($data) {
+	public function setData(StdClass $data) {
 		$this->data = $data;
 	}
 
