@@ -249,18 +249,8 @@ class parseUser extends parseRestClient {
     		'urlParams' => $urlParams,
     		'sessionToken' => $token
 		));
-		
-		if ($this->data == null)
-			$this->data = new StdClass();
 
-    	foreach ($request as $key => $value) {
-			if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
-				$this->data->{$key} = $this->stdToParse($value->className, $value);
-			else
-				$this->data->{$key} = $value;
-		}
-
-    	return $this;
+		return $this->get($request->objectId);
 	}
 
 	public function get($objectId){
