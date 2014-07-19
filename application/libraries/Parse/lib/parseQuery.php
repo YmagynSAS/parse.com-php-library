@@ -128,9 +128,7 @@ class parseQuery extends parseRestClient {
 		}
 
 		$res = new StdClass();
-		if (isset($request->count))
-			$res->count = $request->count;
-
+		$res->count = ($this->_count == 1 ? $request->count : count($arr));
 		$res->results = $arr;
 		return $res;
 	}
