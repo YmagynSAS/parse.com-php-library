@@ -57,10 +57,11 @@ class parseQuery extends parseRestClient {
 
 	public function find(){
 		$urlParams = array();
-		if(empty($this->_query)){
+		if(empty($this->_query)) {
 			if(!empty($this->_include)){
 				$urlParams['include'] = implode(',',$this->_include);
 			}
+
 			$request = $this->request(array(
 				'method' => 'GET',
 				'requestUrl' => $this->_requestUrl,
@@ -208,8 +209,11 @@ class parseQuery extends parseRestClient {
 
 	public function whereEqualTo($key,$value){
 		if(isset($key) && isset($value)){
-			if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className))
-				$value = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
+			if (is_object($value) && is_a($value, 'parseObject') && isset($value->data->objectId) && isset($value->_className))
+				$value = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data->objectId);
+
+			else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data->objectId))
+				$value = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data->objectId);
 
 			$this->_query[$key] = $value;
 		}
@@ -221,8 +225,11 @@ class parseQuery extends parseRestClient {
 
 	public function whereNotEqualTo($key,$value){
 		if(isset($key) && isset($value)){
-			if (is_object($value) && is_a($value, 'parseObject') && isset($value->data['objectId']) && isset($value->_className))
-				$value = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data['objectId']);
+			if (is_object($value) && is_a($value, 'parseObject') && isset($value->data->objectId) && isset($value->_className))
+				$value = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data->objectId);
+
+			else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data->objectId))
+				$value = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data->objectId);
 
 			$this->_query[$key] = array(
 				'$ne' => $value
