@@ -52,6 +52,8 @@ class parseObject extends parseRestClient {
 	}
 
 	public function __set($name, $value) {
+		if ($name == "data")
+			$this->throwError('You can\'t set `data`, use $obj->setData instead', 403);
 		if ($this->data == null)
 			$this->data = new StdClass();
 
@@ -61,6 +63,10 @@ class parseObject extends parseRestClient {
 		else if ($name != '_className') {
 			$this->data->{$name} = $value;
 		}
+	}
+
+	public function setData($data) {
+		$this->data = $data;
 	}
 
 	public function save() {
