@@ -6,7 +6,7 @@ class Parse {
 	}
 
 	public function ParseObject($className) {
-		include_once('lib/ParseObject.php');
+		include_once('lib/parseObject.php');
 		return new parseObject($className);
 	}
 
