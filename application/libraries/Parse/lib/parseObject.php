@@ -31,6 +31,9 @@ class parseObject extends parseRestClient {
 				if (is_object($v) && is_a($v, 'parseObject') && isset($v->data->objectId) && isset($v->_className)) {
 					$relation->objects[] = array("__type" => "Pointer", "className" => $v->_className, "objectId" => $v->data->objectId);
 				}
+				else if (is_object($v) && is_a($v, 'parseUser') && isset($v->data->objectId)) {
+					$relation->objects[] = array("__type" => "Pointer", "className" => '_User', "objectId" => $v->data->objectId);
+				}
 				else {
 					$this->data->{$name} = $value;
 					return $this;
@@ -117,7 +120,7 @@ class parseObject extends parseRestClient {
 		return $resp;
 	}
 
-	public function addToRelation($name, parseObject $value) {
+	public function addToRelation($name, parseRestClient $value) {
 		if (!isset($this->data->{$name})) {
 			$this->pointer($name, [$value]);
 		}
@@ -132,6 +135,7 @@ class parseObject extends parseRestClient {
 				$this->pointer($name, $relation);
 			}
 		}
+		return $this;
 	}
 
 	public function linkRelation($key, $include_relation = FALSE) {

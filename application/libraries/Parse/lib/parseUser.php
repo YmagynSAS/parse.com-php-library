@@ -24,6 +24,9 @@ class parseUser extends parseRestClient {
 				if (is_object($v) && is_a($v, 'parseObject') && isset($v->data->objectId) && isset($v->_className)) {
 					$relation->objects[] = array("__type" => "Pointer", "className" => $v->_className, "objectId" => $v->data->objectId);
 				}
+				else if (is_object($v) && is_a($v, 'parseUser') && isset($v->data->objectId)) {
+					$relation->objects[] = array("__type" => "Pointer", "className" => '_User', "objectId" => $v->data->objectId);
+				}
 				else {
 					$this->data->{$name} = $value;
 					return $this;
@@ -45,6 +48,8 @@ class parseUser extends parseRestClient {
 	}
 
 	public function __set($name, $value) {
+		if ($name == "data")
+			$this->throwError('You can\'t set `data`, use $obj->setData() instead', 403);
 		if ($this->data == null)
 			$this->data = new StdClass();
 
@@ -53,6 +58,20 @@ class parseUser extends parseRestClient {
 		}
 		else if ($name != '_className') {
 			$this->data->{$name} = $value;
+		}
+	}
+
+	public function setData(StdClass $data) {
+		if ($this->data == null)
+			$this->data = new StdClass();
+
+		foreach ($data as $key => $value) {
+			if (is_object($value) || is_array($value)) {
+				$this->pointer($key, $value);
+			}
+			else if ($key != '_className') {
+				$this->data->{$key} = $value;
+			}
 		}
 	}
 
@@ -72,7 +91,14 @@ class parseUser extends parseRestClient {
 				'data' => $this->data
 			));
 			
-	    	return $request;
+	    	foreach ($request as $key => $value) {
+				if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
+					$this->data->{$key} = $this->stdToParse($value->className, $value);
+				else
+					$this->data->{$key} = $value;
+			}
+
+	    	return $this;
 			
 		}
 		else{
@@ -153,7 +179,7 @@ class parseUser extends parseRestClient {
 		return $this;
 	}
 
-	public function addToRelation($name, parseObject $value) {
+	public function addToRelation($name, parseRestClient $value) {
 		if (!isset($this->data->{$name})) {
 			$this->pointer($name, [$value]);
 		}
@@ -163,11 +189,13 @@ class parseUser extends parseRestClient {
 				$this->addToRelation($name, $value);
 			}
 			else {
+				$this->data->{$name} = [];
 				$relation = $this->data->{$name};
 				$relation[] = $value;
 				$this->pointer($name, $relation);
 			}
 		}
+		return $this;
 	}
 
 	public function stdToParse($class, $obj, $include_relation = FALSE) {
@@ -268,23 +296,31 @@ class parseUser extends parseRestClient {
 	}
 
 	//TODO: should make the parseUser contruct accept the objectId and update and delete would only require the sessionToken
-	public function update($objectId, $sessionToken){
-		if(!empty($objectId) || !empty($sessionToken)){
+	public function update($objectId = '', $sessionToken = ''){
+		if (!empty($objectId) && !empty($sessionToken)) {
+			$this->data->objectId = $objectId;
+			$this->data->sessionToken = $sessionToken;
+		}
+
+		if(!empty($this->data->objectId) || !empty($this->data->sessionToken)){
+			$objectId = $this->data->objectId;
+			$sessionToken = $this->data->sessionToken;
 
 			$clean = ['sessionToken', 'createdAt', 'objectId', 'updatedAt'];
+			$data = clone $this->data;
 			foreach ($clean as $value) {
-				if (isset($this->data->{$value}))
-					unset($this->data->{$value});
+				if (isset($data->{$value}))
+					unset($data->{$value});
 			}
 
 			$request = $this->request(array(
 				'method' => 'PUT',
 				'requestUrl' => 'users/'.$objectId,
 	    		'sessionToken' => $sessionToken,
-				'data' => $this->data
+				'data' => $data
 			));
-			
-	    	return $request;			
+
+	    	return $this;			
 		}
 		else{
 			$this->throwError('objectId and sessionToken are required for the update method');
