@@ -198,7 +198,8 @@ class parseObject extends parseRestClient {
 			if ($this->data == null)
 				$this->data = new StdClass();
 			$this->data->objectId = $id;
-			return $this->stdToParse($this->_className, $request, $include_relation);
+			$this->data = $this->stdToParse($this->_className, $request, $include_relation)->data;
+			return $this;
 		}
 	}
 
