@@ -189,7 +189,6 @@ class parseUser extends parseRestClient {
 				$this->addToRelation($name, $value);
 			}
 			else {
-				$this->data->{$name} = [];
 				$relation = $this->data->{$name};
 				$relation[] = $value;
 				$this->pointer($name, $relation);
