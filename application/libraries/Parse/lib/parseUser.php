@@ -4,408 +4,443 @@ include_once('parse.php');
 include_once('parseQuery.php');
 
 if (!class_exists('parseObject')) {
-	include_once('parseObject.php');
+    include_once('parseObject.php');
 }
 
 class parseUser extends parseRestClient {
-	public $_includes = array();
-	public $authData;
+    public $_includes = array();
+    public $authData;
 
-	function __construct() {
-		$this->data = new StdClass();
-		parent::__construct();
-	}
+    function __construct() {
+        $this->data = new StdClass();
+        parent::__construct();
+    }
 
-	private function pointer($name, $value) {
-		if (is_array($value)) {
-			$relation = new StdClass();
-			$relation->__op = "AddRelation";
-			foreach ($value as $k => $v) {
-				if (is_object($v) && is_a($v, 'parseObject') && isset($v->data->objectId) && isset($v->_className)) {
-					$relation->objects[] = array("__type" => "Pointer", "className" => $v->_className, "objectId" => $v->data->objectId);
-				}
-				else if (is_object($v) && is_a($v, 'parseUser') && isset($v->data->objectId)) {
-					$relation->objects[] = array("__type" => "Pointer", "className" => '_User', "objectId" => $v->data->objectId);
-				}
-				else {
-					$this->data->{$name} = $value;
-					return $this;
-				}
-			}
-			$this->data->{$name} = $relation;
-		}
-		else if (is_object($value) && is_a($value, 'parseObject') && isset($value->data->objectId) && isset($value->_className)) {
-			$this->data->{$name} = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data->objectId);
-		}
-		else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data->objectId)) {
-			$this->data->{$name} = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data->objectId);
-		}
-		else {
-			$this->data->{$name} = $value;
-		}
+    private function pointer($name, $value) {
+        if (is_array($value)) {
+            $relation = new StdClass();
+            $relation->__op = "AddRelation";
+            foreach ($value as $k => $v) {
+                if (is_object($v) && is_a($v, 'parseObject') && isset($v->data->objectId) && isset($v->_className)) {
+                    $relation->objects[] = array("__type" => "Pointer", "className" => $v->_className, "objectId" => $v->data->objectId);
+                }
+                else if (is_object($v) && is_a($v, 'parseUser') && isset($v->data->objectId)) {
+                    $relation->objects[] = array("__type" => "Pointer", "className" => '_User', "objectId" => $v->data->objectId);
+                }
+                else {
+                    $this->data->{$name} = $value;
+                    return $this;
+                }
+            }
+            $this->data->{$name} = $relation;
+        }
+        else if (is_object($value) && is_a($value, 'parseObject') && isset($value->data->objectId) && isset($value->_className)) {
+            $this->data->{$name} = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data->objectId);
+        }
+        else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data->objectId)) {
+            $this->data->{$name} = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data->objectId);
+        }
+        else {
+            $this->data->{$name} = $value;
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function __set($name, $value) {
-		if ($name == "data")
-			$this->throwError('You can\'t set `data`, use $obj->setData() instead', 403);
-		if ($this->data == null)
-			$this->data = new StdClass();
+    public function __set($name, $value) {
+        if ($name == "data")
+            $this->throwError('You can\'t set `data`, use $obj->setData() instead', 403);
+        if ($this->data == null)
+            $this->data = new StdClass();
 
-		if (is_object($value) || is_array($value)) {
-			$this->pointer($name, $value);
-		}
-		else if ($name != '_className') {
-			$this->data->{$name} = $value;
-		}
-	}
+        if (is_object($value) || is_array($value)) {
+            $this->pointer($name, $value);
+        }
+        else if ($name != '_className') {
+            $this->data->{$name} = $value;
+        }
+    }
 
-	public function setData(StdClass $data) {
-		if ($this->data == null)
-			$this->data = new StdClass();
+    public function setData(StdClass $data) {
+        if ($this->data == null)
+            $this->data = new StdClass();
 
-		foreach ($data as $key => $value) {
-			if (is_object($value) || is_array($value)) {
-				$this->pointer($key, $value);
-			}
-			else if ($key != '_className') {
-				$this->data->{$key} = $value;
-			}
-		}
-	}
+        foreach ($data as $key => $value) {
+            if (is_object($value) || is_array($value)) {
+                $this->pointer($key, $value);
+            }
+            else if ($key != '_className') {
+                $this->data->{$key} = $value;
+            }
+        }
+    }
 
-	public function signup($username='', $password=''){
-		if($username != '' && $password != ''){
-			if (is_null($this->data))
-				$this->data = new StdClass();
+    public function signup($username='', $password=''){
+        if($username != '' && $password != ''){
+            if (is_null($this->data))
+                $this->data = new StdClass();
 
-			$this->data->username = $username;
-			$this->data->password = $password;
-		}
+            $this->data->username = $username;
+            $this->data->password = $password;
+        }
 
-		if($this->data->username != '' && $this->data->username != ''){
-			$request = $this->request(array(
-				'method' => 'POST',
-	    		'requestUrl' => 'users',
-				'data' => $this->data
-			));
-			
-	    	foreach ($request as $key => $value) {
-				if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
-					$this->data->{$key} = $this->stdToParse($value->className, $value);
-				else
-					$this->data->{$key} = $value;
-			}
+        if($this->data->username != '' && $this->data->username != ''){
+            $request = $this->request(array(
+                'method' => 'POST',
+                'requestUrl' => 'users',
+                'data' => $this->data
+            ));
 
-	    	return $this;
-			
-		}
-		else{
-			$this->throwError('username and password fields are required for the signup method');
-		}
-	}
+            foreach ($request as $key => $value) {
+                if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
+                    $this->data->{$key} = $this->stdToParse($value->className, $value);
+                else
+                    $this->data->{$key} = $value;
+            }
 
-	public function login($username='', $password='') {
-		if($username != '' && $password != ''){
-			if (is_null($this->data))
-				$this->data = new StdClass();
-			$this->data->username = $username;
-			$this->data->password = $password;
-		}
+            return $this;
 
-		if(!empty($this->data->username) || !empty($this->data->password)	){
-			$urlParams = [];
-			if(!empty($this->_includes)){
-				$urlParams['include'] = implode(',', $this->_includes);
-			}
+        }
+        else{
+            $this->throwError('username and password fields are required for the signup method');
+        }
+    }
 
-			$request = $this->request(array(
-				'method' => 'GET',
-	    		'requestUrl' => 'login',
-		    	'data' => array(
-		    		'password' => $this->data->password,
-		    		'username' => $this->data->username,
-		    	)
-			));
+    public function login($username='', $password='') {
+        if($username != '' && $password != ''){
+            if (is_null($this->data))
+                $this->data = new StdClass();
+            $this->data->username = $username;
+            $this->data->password = $password;
+        }
 
-			foreach ($request as $key => $value) {
-				if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
-					$this->data->{$key} = $this->stdToParse($value->className, $value);
-				else
-					$this->data->{$key} = $value;
-			}
+        if(!empty($this->data->username) || !empty($this->data->password)	){
+            $urlParams = [];
+            if(!empty($this->_includes)){
+                $urlParams['include'] = implode(',', $this->_includes);
+            }
 
-	    	return $this;
-		}
-		else{
-			$this->throwError('username and password field are required for the login method');
-		}
-	
-	}
+            $request = $this->request(array(
+                'method' => 'GET',
+                'requestUrl' => 'login',
+                'data' => array(
+                    'password' => $this->data->password,
+                    'username' => $this->data->username,
+                )
+            ));
 
-	private function getRelation($key, $relation) {
-		$relatedTo = [
-			'object' => [
-				'__type' => 'Pointer',
-				'className' => '_User',
-				'objectId' => $this->data->objectId
-			],
-			'key' => $key
-		];
-		$query = new parseQuery($relation->className);
-		$query->where('$relatedTo', $relatedTo);
-		$resp = $query->find();
-		return $resp;
-	}
+            foreach ($request as $key => $value) {
+                if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
+                    $this->data->{$key} = $this->stdToParse($value->className, $value);
+                else
+                    $this->data->{$key} = $value;
+            }
 
-	public function linkRelation($key, $include_relation = FALSE) {
-		if (!isset($this->data->{$key}))
-			$this->throwError($key . " don't exist");
-		$value = $this->data->{$key};
-		if (!isset($value->__type) || (isset($value->__type) && $value->__type != "Relation"))
-			$this->throwError($key . " is not a relation");
-			
-		$resp = $this->getRelation($key, $value);
-		$arr = [];
-		if (isset($resp->results))
-			$result = $resp->results;
-		else
-			$result = $resp;
-		foreach ($result as $res) {
-			$arr[] = $this->stdToParse($value->className, $res, $include_relation);
-		}
-		$this->data->{$key} = $arr;
-		return $this;
-	}
+            return $this;
+        }
+        else{
+            $this->throwError('username and password field are required for the login method');
+        }
 
-	public function addToRelation($name, parseRestClient $value) {
-		if (!isset($this->data->{$name})) {
-			$this->pointer($name, [$value]);
-		}
-		else {
-			if (is_object($this->data->{$name}) && isset($this->data->{$name}->__type) && $this->data->{$name}->__type == "Relation") {
-				$this->linkRelation($name);
-				$this->addToRelation($name, $value);
-			}
-			else {
-				$relation = $this->data->{$name};
-				$relation[] = $value;
-				$this->pointer($name, $relation);
-			}
-		}
-		return $this;
-	}
+    }
 
-	public function stdToParse($class, $obj, $include_relation = FALSE) {
-		$objRet = new parseObject($class);
+    private function getRelation($key, $relation) {
+        $relatedTo = [
+            'object' => [
+                '__type' => 'Pointer',
+                'className' => '_User',
+                'objectId' => $this->data->objectId
+            ],
+            'key' => $key
+        ];
+        $query = new parseQuery(($relation->className == "_User") ? 'users' : $relation->className);
+        $query->where('$relatedTo', $relatedTo);
+        $resp = $query->find();
+        return $resp;
+    }
 
-		foreach ($obj as $key => $value) {
-			if (is_object($value) && isset($value->__type) && $value->__type == "Object") {
-				$className = $value->className;
-				unset($value->className);
-				$objRet->data->{$key} = $this->stdToParse($className, $value, $include_relation);
-			}
-			else if (is_object($value) && isset($value->__type) && $value->__type == "Relation" && $include_relation) {
-				$resp = $this->getRelation($key, $value);
-				$arr = [];
-				foreach ($resp->results as $res) {
-					$arr[] = $this->stdToParse($value->className, $res, $include_relation);
-				}
-				$objRet->{$key} = $arr;
-			}
-			else {
-				$objRet->{$key} = $value;
-			}
-		}
-		return $objRet;
-	}
+    public function linkRelation($key, $include_relation = FALSE) {
+        if (!isset($this->data->{$key}))
+            $this->throwError($key . " don't exist");
+        $value = $this->data->{$key};
+        if (!isset($value->__type) || (isset($value->__type) && $value->__type != "Relation"))
+            $this->throwError($key . " is not a relation");
 
-	public function socialLogin(){
-		if(!empty($this->authData)){
-			$request = $this->request( array(
-				'method' => 'POST',
-				'requestUrl' => 'users',
-				'data' => array(
-					'authData' => $this->authData
-				)
-			));
-			return $request;
-		}
-		else{
-			$this->throwError('authArray must be set use addAuthData method');
-		}
-	}
+        $resp = $this->getRelation($key, $value);
+        $arr = [];
+        if (isset($resp->results))
+            $result = $resp->results;
+        else
+            $result = $resp;
 
-	public function become($token) {
-		$urlParams = [];
-		if(!empty($this->_includes)){
-			$urlParams['include'] = implode(',', $this->_includes);
-		}
+        foreach ($result as $res) {
+            /*
+            if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
+                $arr[] = $this->stdToParse($value->className, $res, $include_relation);
+            else if (is_object($value) && isset($value->className) && $value->className == "_User")
+                $arr[] = $this->stdToUser($res, $include_relation);
+            else
+                $arr[] = $value;
+            */
+            $arr[] = $this->stdToParse($value->className, $res, $include_relation);
+        }
+        $this->data->{$key} = $arr;
+        return $this;
+    }
 
-		$request = $this->request(array(
-			'method' => 'GET',
-    		'requestUrl' => 'users/me',
-    		'urlParams' => $urlParams,
-    		'sessionToken' => $token
-		));
+    public function addToRelation($name, parseRestClient $value) {
+        if (!isset($this->data->{$name})) {
+            $this->pointer($name, [$value]);
+        }
+        else {
+            if (is_object($this->data->{$name}) && isset($this->data->{$name}->__type) && $this->data->{$name}->__type == "Relation") {
+                $this->linkRelation($name);
+                $this->addToRelation($name, $value);
+            }
+            else {
+                $relation = $this->data->{$name};
+                $relation[] = $value;
+                $this->pointer($name, $relation);
+            }
+        }
+        return $this;
+    }
 
-		return $this->get($request->objectId);
-	}
+    public function stdToParse($class, $obj, $include_relation = FALSE) {
+        $objRet = new parseObject($class);
 
-	public function get($objectId){
-		if($objectId != ''){
-			$urlParams = [];
-			if(!empty($this->_includes)){
-				$urlParams['include'] = implode(',', $this->_includes);
-			}
+        foreach ($obj as $key => $value) {
+            if (is_object($value) && isset($value->__type) && $value->__type == "Object") {
+                $className = $value->className;
+                unset($value->className);
+                $objRet->data->{$key} = $this->stdToParse($className, $value, $include_relation);
+            }
+            else if (is_object($value) && isset($value->__type) && $value->__type == "Relation" && $include_relation) {
+                $resp = $this->getRelation($key, $value);
+                $arr = [];
+                foreach ($resp->results as $res) {
+                    $arr[] = $this->stdToParse($value->className, $res, $include_relation);
+                }
+                $objRet->{$key} = $arr;
+            }
+            else {
+                $objRet->{$key} = $value;
+            }
+        }
+        return $objRet;
+    }
 
-			$request = $this->request(array(
-				'method' => 'GET',
-	    		'requestUrl' => 'users/'.$objectId,
-	    		'urlParams' => $urlParams
-			));
-			
-			if ($this->data == null)
-				$this->data = new StdClass();
+    public function socialLogin(){
+        if(!empty($this->authData)){
+            $request = $this->request( array(
+                'method' => 'POST',
+                'requestUrl' => 'users',
+                'data' => array(
+                    'authData' => $this->authData
+                )
+            ));
+            return $request;
+        }
+        else{
+            $this->throwError('authArray must be set use addAuthData method');
+        }
+    }
 
-	    	foreach ($request as $key => $value) {
-				if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
-					$this->data->{$key} = $this->stdToParse($value->className, $value);
-				else
-					$this->data->{$key} = $value;
-			}
+    public function become($token) {
+        $urlParams = [];
+        if(!empty($this->_includes)){
+            $urlParams['include'] = implode(',', $this->_includes);
+        }
 
-	    	return $this;
-		}
-		else{
-			$this->throwError('objectId is required for the get method');
-		}
-		
-	}
+        $request = $this->request(array(
+            'method' => 'GET',
+            'requestUrl' => 'users/me',
+            'urlParams' => $urlParams,
+            'sessionToken' => $token
+        ));
 
-	//TODO: should make the parseUser contruct accept the objectId and update and delete would only require the sessionToken
-	public function update($objectId = '', $sessionToken = ''){
-		if (!empty($objectId) && !empty($sessionToken)) {
-			$this->data->objectId = $objectId;
-			$this->data->sessionToken = $sessionToken;
-		}
+        return $this->get($request->objectId);
+    }
 
-		if(!empty($this->data->objectId) || !empty($this->data->sessionToken)){
-			$objectId = $this->data->objectId;
-			$sessionToken = $this->data->sessionToken;
+    public function stdToUser($obj, $include_relation = FALSE) {
+        $objRet = new parseUser();
 
-			$clean = ['sessionToken', 'createdAt', 'objectId', 'updatedAt'];
-			$data = clone $this->data;
-			foreach ($clean as $value) {
-				if (isset($data->{$value}))
-					unset($data->{$value});
-			}
+        foreach ($obj as $key => $value) {
+            if (is_object($value) && isset($value->__type) && $value->__type == "Object") {
+                $className = $value->className;
+                unset($value->className);
+                $objRet->data->{$key} = $this->stdToParse($className, $value, $include_relation);
+            }
+            else if (is_object($value) && isset($value->__type) && $value->__type == "Relation" && $include_relation) {
+                $resp = $this->getRelation($key, $value);
+                $arr = [];
+                foreach ($resp->results as $res) {
+                    $arr[] = $this->stdToParse($value->className, $res, $include_relation);
+                }
+                $objRet->{$key} = $arr;
+            }
+            else {
+                $objRet->{$key} = $value;
+            }
+        }
+        return $objRet;
+    }
 
-			$request = $this->request(array(
-				'method' => 'PUT',
-				'requestUrl' => 'users/'.$objectId,
-	    		'sessionToken' => $sessionToken,
-				'data' => $data
-			));
+    public function get($objectId){
+        if($objectId != ''){
+            $urlParams = [];
+            if(!empty($this->_includes)){
+                $urlParams['include'] = implode(',', $this->_includes);
+            }
 
-	    	return $this;			
-		}
-		else{
-			$this->throwError('objectId and sessionToken are required for the update method');
-		}
-		
-	}
+            $request = $this->request(array(
+                'method' => 'GET',
+                'requestUrl' => 'users/'.$objectId,
+                'urlParams' => $urlParams
+            ));
 
-	public function delete($objectId,$sessionToken){
-		if(!empty($objectId) || !empty($sessionToken)){
-			$request = $this->request(array(
-				'method' => 'DELETE',
-				'requestUrl' => 'users/'.$objectId,
-	    		'sessionToken' => $sessionToken
-			));
-			
-	    	return $request;			
-		}
-		else{
-			$this->throwError('objectId and sessionToken are required for the delete method');
-		}
-		
-	}
-	
-	public function addAuthData($authArray){
-		if(is_array($authArray)){			
-			$this->authData[$authArray['type']] = $authArray['authData'];
-		}
-		else{
-			$this->throwError('authArray must be an array containing a type key and a authData key in the addAuthData method');
-		}
-	}
+            if ($this->data == null)
+                $this->data = new StdClass();
 
-	public function linkAccounts($objectId,$sessionToken){
-		if(!empty($objectId) || !empty($sessionToken)){
-			$request = $this->request( array(
-				'method' => 'PUT',
-				'requestUrl' => 'users/'.$objectId,
-				'sessionToken' => $sessionToken,
-				'data' => array(
-					'authData' => $this->authData
-				)
-			));
+            foreach ($request as $key => $value) {
+                if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
+                    $this->data->{$key} = $this->stdToParse($value->className, $value);
+                else if (is_object($value) && isset($value->className) && $value->className == "_User" && $value->__type == "Pointer")
+                    $this->data->{$key} = $this->stdToUser($value);
+                else
+                    $this->data->{$key} = $value;
+            }
 
-			return $request;
-		}
-		else{
-			$this->throwError('objectId and sessionToken are required for the linkAccounts method');
-		}		
-	}
+            return $this;
+        }
+        else{
+            $this->throwError('objectId is required for the get method');
+        }
 
-	public function unlinkAccount($objectId,$sessionToken,$type){
-		$linkedAccount[$type] = null;
+    }
 
-		if(!empty($objectId) || !empty($sessionToken)){
-			$request = $this->request( array(
-				'method' => 'PUT',
-				'requestUrl' => 'users/'.$objectId,
-				'sessionToken' => $sessionToken,
-				'data' => array(
-					'authData' => $linkedAccount
-				)
-			));
+    //TODO: should make the parseUser contruct accept the objectId and update and delete would only require the sessionToken
+    public function update($objectId = '', $sessionToken = ''){
+        if (!empty($objectId) && !empty($sessionToken)) {
+            $this->data->objectId = $objectId;
+            $this->data->sessionToken = $sessionToken;
+        }
 
-			return $request;
-		}
-		else{
-			$this->throwError('objectId and sessionToken are required for the linkAccounts method');
-		}		
+        if(!empty($this->data->objectId) || !empty($this->data->sessionToken)){
+            $objectId = $this->data->objectId;
+            $sessionToken = $this->data->sessionToken;
 
-	}
+            $clean = ['sessionToken', 'createdAt', 'objectId', 'updatedAt'];
+            $data = clone $this->data;
+            foreach ($clean as $value) {
+                if (isset($data->{$value}))
+                    unset($data->{$value});
+            }
 
-	public function requestPasswordReset($email){
-		if(!empty($email)){
-			$this->email - $email;
-			$request = $this->request(array(
-			'method' => 'POST',
-			'requestUrl' => 'requestPasswordReset',
-			'email' => $email,
-			'data' => $this->data
-			));
+            $request = $this->request(array(
+                'method' => 'PUT',
+                'requestUrl' => 'users/'.$objectId,
+                'sessionToken' => $sessionToken,
+                'data' => $data
+            ));
 
-			return $request;
-		}
-		else{
-			$this->throwError('email is required for the requestPasswordReset method');
-		}
-	}
+            return $this;
+        }
+        else{
+            $this->throwError('objectId and sessionToken are required for the update method');
+        }
 
-	public function addIncludes($name){
-		foreach (func_get_args() as $param) {
-	        $this->_includes[] = $param;
-	    }
+    }
 
-	    return $this;
-	}
-	
+    public function delete($objectId,$sessionToken){
+        if(!empty($objectId) || !empty($sessionToken)){
+            $request = $this->request(array(
+                'method' => 'DELETE',
+                'requestUrl' => 'users/'.$objectId,
+                'sessionToken' => $sessionToken
+            ));
+
+            return $request;
+        }
+        else{
+            $this->throwError('objectId and sessionToken are required for the delete method');
+        }
+
+    }
+
+    public function addAuthData($authArray){
+        if(is_array($authArray)){
+            $this->authData[$authArray['type']] = $authArray['authData'];
+        }
+        else{
+            $this->throwError('authArray must be an array containing a type key and a authData key in the addAuthData method');
+        }
+    }
+
+    public function linkAccounts($objectId,$sessionToken){
+        if(!empty($objectId) || !empty($sessionToken)){
+            $request = $this->request( array(
+                'method' => 'PUT',
+                'requestUrl' => 'users/'.$objectId,
+                'sessionToken' => $sessionToken,
+                'data' => array(
+                    'authData' => $this->authData
+                )
+            ));
+
+            return $request;
+        }
+        else{
+            $this->throwError('objectId and sessionToken are required for the linkAccounts method');
+        }
+    }
+
+    public function unlinkAccount($objectId,$sessionToken,$type){
+        $linkedAccount[$type] = null;
+
+        if(!empty($objectId) || !empty($sessionToken)){
+            $request = $this->request( array(
+                'method' => 'PUT',
+                'requestUrl' => 'users/'.$objectId,
+                'sessionToken' => $sessionToken,
+                'data' => array(
+                    'authData' => $linkedAccount
+                )
+            ));
+
+            return $request;
+        }
+        else{
+            $this->throwError('objectId and sessionToken are required for the linkAccounts method');
+        }
+
+    }
+
+    public function requestPasswordReset($email){
+        if(!empty($email)){
+            $this->email - $email;
+            $request = $this->request(array(
+                'method' => 'POST',
+                'requestUrl' => 'requestPasswordReset',
+                'email' => $email,
+                'data' => $this->data
+            ));
+
+            return $request;
+        }
+        else{
+            $this->throwError('email is required for the requestPasswordReset method');
+        }
+    }
+
+    public function addIncludes($name){
+        foreach (func_get_args() as $param) {
+            $this->_includes[] = $param;
+        }
+
+        return $this;
+    }
+
 }
 
 ?>
