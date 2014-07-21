@@ -73,6 +73,8 @@ class parseUser extends parseRestClient {
                 $this->data->{$key} = $value;
             }
         }
+
+        return $this;
     }
 
     public function signup($username='', $password=''){
@@ -114,7 +116,7 @@ class parseUser extends parseRestClient {
             $this->data->password = $password;
         }
 
-        if(!empty($this->data->username) || !empty($this->data->password)	){
+        if(!empty($this->data->username) || !empty($this->data->password)   ){
             $urlParams = [];
             if(!empty($this->_includes)){
                 $urlParams['include'] = implode(',', $this->_includes);
@@ -305,7 +307,7 @@ class parseUser extends parseRestClient {
             foreach ($request as $key => $value) {
                 if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
                     $this->data->{$key} = $this->stdToParse($value->className, $value);
-                else if (is_object($value) && isset($value->className) && $value->className == "_User" && $value->__type == "Pointer")
+                else if (is_object($value) && isset($value->className) && $value->className == "_User" && $value->__type == "Pointer" && in_array($key, $this->_includes))
                     $this->data->{$key} = $this->stdToUser($value);
                 else
                     $this->data->{$key} = $value;
@@ -433,7 +435,7 @@ class parseUser extends parseRestClient {
         }
     }
 
-    public function addIncludes($name){
+    public function addIncludes(){
         foreach (func_get_args() as $param) {
             $this->_includes[] = $param;
         }
@@ -441,6 +443,13 @@ class parseUser extends parseRestClient {
         return $this;
     }
 
+    public function unsetData() {
+        foreach (func_get_args() as $param) {
+            unset($this->data->{$param});
+        }
+
+        return $this;
+    }
 }
 
 ?>
