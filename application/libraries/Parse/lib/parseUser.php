@@ -165,8 +165,9 @@ class parseUser extends parseRestClient {
         if (!isset($this->data->{$key}))
             $this->throwError($key . " don't exist");
         $value = $this->data->{$key};
-        if (!isset($value->__type) || (isset($value->__type) && $value->__type != "Relation"))
+        if (!isset($value->__type) || (isset($value->__type) && $value->__type != "Relation")) {
             $this->throwError($key . " is not a relation");
+        }
 
         $resp = $this->getRelation($key, $value);
         $arr = [];
@@ -175,18 +176,18 @@ class parseUser extends parseRestClient {
         else
             $result = $resp;
 
+        /*
         foreach ($result as $res) {
-            /*
             if (is_object($value) && isset($value->className) && $value->className != "_User" && $value->__type == "Pointer")
                 $arr[] = $this->stdToParse($value->className, $res, $include_relation);
-            else if (is_object($value) && isset($value->className) && $value->className == "_User")
+            else if (is_object($value) && isset($value->className) && $value->className == "_User" && $value->__type == "Pointer")
                 $arr[] = $this->stdToUser($res, $include_relation);
             else
                 $arr[] = $value;
-            */
-            $arr[] = $this->stdToParse($value->className, $res, $include_relation);
+            //$arr[] = $this->stdToParse($value->className, $res, $include_relation);
         }
-        $this->data->{$key} = $arr;
+        */
+        $this->data->{$key} = $result;
         return $this;
     }
 
