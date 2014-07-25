@@ -183,9 +183,11 @@ class parseObject extends parseRestClient {
 	}
 
 	public function get($id, $include_relation = FALSE){
+		if (empty($id) || $id == null)
+			$this->throwError('Id cannot be empty or null', 1);
 		if($this->_className != '' || !empty($id)) {
 			$urlParams = [];
-			if(!empty($this->_includes)){
+			if(!empty($this->_includes)) {
 				$urlParams['include'] = implode(',', $this->_includes);
 			}
 

@@ -290,9 +290,9 @@ class parseUser extends parseRestClient {
     }
 
     public function get($objectId){
-        if($objectId != ''){
+        if(!empty($objectId) || $objectId != null){
             $urlParams = [];
-            if(!empty($this->_includes)){
+            if(!empty($this->_includes)) {
                 $urlParams['include'] = implode(',', $this->_includes);
             }
 
