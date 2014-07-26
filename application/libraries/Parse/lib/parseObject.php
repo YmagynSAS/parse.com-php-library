@@ -25,6 +25,9 @@ class parseObject extends parseRestClient {
 
     private function pointer($name, $value) {
         if (is_array($value)) {
+            if (empty($value))
+                return $this;
+
             $relation = new StdClass();
             $relation->__op = "AddRelation";
             foreach ($value as $k => $v) {
@@ -104,6 +107,20 @@ class parseObject extends parseRestClient {
                 return $request;
             }
         }
+    }
+
+    public function queryRelation($key, $relation) {
+        $relatedTo = [
+            'object' => [
+                '__type' => 'Pointer',
+                'className' => $this->_className,
+                'objectId' => $this->data->objectId
+            ],
+            'key' => $key
+        ];
+        $query = new parseQuery($relation->className);
+        $query->where('$relatedTo', $relatedTo);
+        return $query;
     }
 
     private function getRelation($key, $relation) {
