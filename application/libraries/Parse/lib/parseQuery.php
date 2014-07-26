@@ -145,6 +145,28 @@ class parseQuery extends parseRestClient {
 		return $this;
 	}
 
+	public function whereOr($key,$value){
+        if(isset($key) && isset($value)){
+            if(is_array($value)){
+                $params = [];
+                foreach($value as $val)
+                {
+                    $param = new stdClass();
+                    $param->{$key} = $val;
+                    $params[] = $param;
+                }
+                $this->_query['$or'] = $params;
+            }
+            else{
+                $this->throwError('$value must be an array to check through');
+            }
+        }
+        else{
+            $this->throwError('the $key and $value parameters must be set when setting a "where" query method');
+        }
+        return $this;
+    }
+
 	public function getCount(){
 		$this->_count = 1;
 		$this->_limit = 0;

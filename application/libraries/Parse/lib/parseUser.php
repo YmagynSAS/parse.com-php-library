@@ -191,6 +191,32 @@ class parseUser extends parseRestClient {
         return $this;
     }
 
+    public function cleanRelation($name) {
+        if (!isset($this->data->{$name}))
+            $this->throwError($name . ' is not a relation', 1);
+
+        $this->linkRelation($name);
+        if (empty($this->data->{$name}))
+            return $this;
+        $relation = new StdClass();
+        $relation->__op = "RemoveRelation";
+        foreach ($this->data->{$name} as $k => $v) {
+            if (is_object($v) && is_a($v, 'parseObject') && isset($v->data->objectId) && isset($v->_className)) {
+                $relation->objects[] = array("__type" => "Pointer", "className" => $v->_className, "objectId" => $v->data->objectId);
+            }
+            else if (is_object($v) && is_a($v, 'parseUser') && isset($v->data->objectId)) {
+                $relation->objects[] = array("__type" => "Pointer", "className" => '_User', "objectId" => $v->data->objectId);
+            }
+        }
+        $backUpData = clone $this->data;
+        $this->setData(new StdClass());
+        $this->data->{$name} = $relation;
+        $this->data->objectId = $backUpData->objectId;
+        $this->update();
+        $this->setData($backUpData);
+        return $this;
+    }
+
     public function addToRelation($name, parseRestClient $value) {
         if (!isset($this->data->{$name})) {
             $this->pointer($name, [$value]);
@@ -202,8 +228,19 @@ class parseUser extends parseRestClient {
             }
             else {
                 $relation = $this->data->{$name};
-                $relation[] = $value;
-                $this->pointer($name, $relation);
+                if (isset($relation->__op) && $relation->__op == "AddRelation") {
+                    if (is_object($value) && is_a($value, 'parseObject') && isset($value->data->objectId) && isset($value->_className)) {
+                        $relation->objects[] = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data->objectId);
+                    }
+                    else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data->objectId)) {
+                        $relation->objects[] = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data->objectId);
+                    }
+                    $this->data->{$name} = $relation;
+                }
+                else {
+                    $relation[] = $value;
+                    $this->pointer($name, $relation);
+                }
             }
         }
         return $this;
