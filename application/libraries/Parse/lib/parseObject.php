@@ -158,7 +158,19 @@ class parseObject extends parseRestClient {
             }
             else {
                 $relation = $this->data->{$name};
-
+                if (isset($relation->__op) && $relation->__op == "AddRelation") {
+                    if (is_object($value) && is_a($value, 'parseObject') && isset($value->data->objectId) && isset($value->_className)) {
+                        $relation->objects[] = array("__type" => "Pointer", "className" => $value->_className, "objectId" => $value->data->objectId);
+                    }
+                    else if (is_object($value) && is_a($value, 'parseUser') && isset($value->data->objectId)) {
+                        $relation->objects[] = array("__type" => "Pointer", "className" => '_User', "objectId" => $value->data->objectId);
+                    }
+                    $this->data->{$name} = $relation;
+                }
+                else {
+                    $relation[] = $value;
+                    $this->pointer($name, $relation);
+                }
             }
         }
         return $this;
