@@ -57,43 +57,25 @@ class parseQuery extends parseRestClient {
 
 	public function find(){
 		$urlParams = array();
-		if(empty($this->_query)) {
-			if(!empty($this->_include)){
-				$urlParams['include'] = implode(',',$this->_include);
-			}
 
-			$request = $this->request(array(
-				'method' => 'GET',
-				'requestUrl' => $this->_requestUrl,
-				'urlParams' => $urlParams,
-			));
-		}
-		else{
-			$urlParams = array(
-				'where' => json_encode( $this->_query )
-			);
-			if(!empty($this->_include)){
-				$urlParams['include'] = implode(',',$this->_include);
-			}
-			if(!empty($this->_order)){
-				$urlParams['order'] = implode(',',$this->_order);
-			}
-			if(!empty($this->_limit) || $this->_limit == 0){
-				$urlParams['limit'] = $this->_limit;
-			}
-			if(!empty($this->_skip)){
-				$urlParams['skip'] = $this->_skip;
-			}
-			if($this->_count == 1){
-				$urlParams['count'] = '1';
-			}
+        if (!empty($this->_include))
+            $urlParams['include'] = implode(',',$this->_include);
+        if (!empty($this->_order))
+            $urlParams['order'] = implode(',',$this->_order);
+        if (!empty($this->_limit) || $this->_limit == 0)
+            $urlParams['limit'] = $this->_limit;
+        if (!empty($this->_skip))
+            $urlParams['skip'] = $this->_skip;
+        if (!empty($this->_query))
+            $urlParams['where'] = json_encode( $this->_query );
+        if($this->_count == 1)
+            $urlParams['count'] = '1';
 
-			$request = $this->request(array(
-				'method' => 'GET',
-				'requestUrl' => $this->_requestUrl,
-				'urlParams' => $urlParams,
-			));
-		}
+        $request = $this->request(array(
+            'method' => 'GET',
+            'requestUrl' => $this->_requestUrl,
+            'urlParams' => $urlParams,
+        ));
 
 		if ($this->_className != "_User" && $this->_requestUrl != "_Installation") {
 			$arr = [];
@@ -436,3 +418,5 @@ class parseQuery extends parseRestClient {
 }
 
 ?>
+
+}
