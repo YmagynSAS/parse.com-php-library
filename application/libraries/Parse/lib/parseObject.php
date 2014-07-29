@@ -264,17 +264,24 @@ class parseObject extends parseRestClient {
         }
     }
 
-    public function update($id){
-        if($this->_className != '' || !empty($id)){
+    public function update($id) {
+        if (empty($id))
+            $id = $this->data->objectId;
 
+        if($this->_className != '' || !empty($id)) {
             unset($this->data->objectId);
             unset($this->data->createdAt);
+            unset($this->data->updatedAt);
+
             $request = $this->request(array(
                 'method' => 'PUT',
                 'requestUrl' => 'classes/'.$this->_className.'/'.$id,
                 'data' => $this->data,
             ));
 
+            $this->data->objectId = $request->objectId;
+            $this->data->createdAt = $request->createdAt;
+            $this->data->updatedAt = $request->updatedAt;
             return $request;
         }
     }
