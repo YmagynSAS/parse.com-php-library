@@ -77,8 +77,8 @@ class parseQuery extends parseRestClient {
             'urlParams' => $urlParams,
         ));
 
+        $arr = [];
 		if ($this->_className != "_User" && $this->_requestUrl != "_Installation") {
-			$arr = [];
 			$object = new parseObject($this->_requestUrl);
 			foreach ($request->results as $obj) {
 				$objParsed = $object->stdToParse($this->_className, $obj);
@@ -91,7 +91,6 @@ class parseQuery extends parseRestClient {
 			}
 		}
 		else if ($this->_className == "_User") {
-			$arr = [];
 			foreach ($request->results as $obj) {
 				$user = new parseUser();
 
