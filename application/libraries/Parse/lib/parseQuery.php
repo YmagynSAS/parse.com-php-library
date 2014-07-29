@@ -417,5 +417,3 @@ class parseQuery extends parseRestClient {
 }
 
 ?>
-
-}
