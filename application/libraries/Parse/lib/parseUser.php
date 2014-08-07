@@ -18,8 +18,11 @@ class parseUser extends parseRestClient {
 
     private function pointer($name, $value) {
         if (is_array($value)) {
-            if (empty($value))
+            if (empty($value)) {
+                $this->data->{$name} = [];
                 return $this;
+            }
+
             $relation = new StdClass();
             $relation->__op = "AddRelation";
             foreach ($value as $k => $v) {

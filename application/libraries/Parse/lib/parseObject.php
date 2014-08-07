@@ -25,8 +25,10 @@ class parseObject extends parseRestClient {
 
     private function pointer($name, $value) {
         if (is_array($value)) {
-            if (empty($value))
+            if (empty($value)) {
+                $this->data->{$name} = [];
                 return $this;
+            }
 
             $relation = new StdClass();
             $relation->__op = "AddRelation";
@@ -101,7 +103,6 @@ class parseObject extends parseRestClient {
                 } catch (Exception $e) {
                     die("An error occured while you trying to save your object:" . $e->getMessage());
                 }
-
                 $this->data->objectId = $request->objectId;
                 $this->data->createdAt = $request->createdAt;
                 return $request;
@@ -278,9 +279,7 @@ class parseObject extends parseRestClient {
                 'requestUrl' => 'classes/'.$this->_className.'/'.$id,
                 'data' => $this->data,
             ));
-
-            $this->data->objectId = $request->objectId;
-            $this->data->createdAt = $request->createdAt;
+            $this->data->objectId = $id;
             $this->data->updatedAt = $request->updatedAt;
             return $request;
         }
