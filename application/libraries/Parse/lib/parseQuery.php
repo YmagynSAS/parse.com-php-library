@@ -15,7 +15,7 @@ class parseQuery extends parseRestClient {
 	private $_skip = 0;
 	private $_count = 0;
 	private $_order = array();
-	private $_query = array();
+	public $_query = array();
 	private $_include = array();
 	private $_relations = array();
 	private $_className = '';
@@ -389,18 +389,17 @@ class parseQuery extends parseRestClient {
 		return $this;
 	}
 
-	public function whereInQuery($key,$className,$inQuery){
-		if(isset($key) && isset($className)){
-			$this->_query[$key] = array(
-				'$inQuery' => $inQuery,
-				'className' => $className
-			);
-		}	
-		else{
-			$this->throwError('the $key and $value parameters must be set when setting a "where" query method');		
-		}
-		return $this;
-	}
+    public function whereInQuery($key, $className, $inQuery){
+        if(isset($key) && isset($className)){
+            $this->_query[$key] = array(
+                '$inQuery' => array('where' => $inQuery->_query, 'className' => $className)
+            );
+        }
+        else{
+            $this->throwError('the $key and $value parameters must be set when setting a "where" query method');
+        }
+
+    }
 
 	public function whereNotInQuery($key,$className,$inQuery){
 		if(isset($key) && isset($className)){
