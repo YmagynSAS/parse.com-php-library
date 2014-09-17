@@ -362,15 +362,15 @@ class parseQuery extends parseRestClient {
 		}
 		return $this;
 	}
-	
-	public function whereRegex($key,$value,$options=''){
+
+	public function whereRegex($key,$value,$options='') {
 		if(isset($key) && isset($value)){
 			$this->_query[$key] = array(
 				'$regex' => $value
 			);
 
 			if(!empty($options)){
-				$this->_query[$key]['options'] = $options;
+				$this->_query[$key]['$options'] = $options;
 			}
 		}	
 		else{
